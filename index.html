@@ -2,51 +2,55 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Dark AI Chat</title>
+<title>GROK Style AI</title>
 
 <style>
 /* ======== 全体 ======== */
 body {
     margin: 0;
     font-family: "Segoe UI", sans-serif;
-    background: #0d0d0d;
-    color: #e0e0e0;
+    background: radial-gradient(circle at top, #0a0a1a, #000);
+    color: #d0d0ff;
     display: flex;
     height: 100vh;
+    overflow: hidden;
 }
 
 /* ======== サイドバー ======== */
 #sidebar {
     width: 240px;
-    background: #111;
+    background: rgba(10, 10, 30, 0.9);
     border-right: 1px solid #222;
     padding: 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(6px);
 }
 
 #sidebar h2 {
     font-size: 22px;
-    color: #00ff9d;
+    color: #7f5cff;
     margin-bottom: 25px;
-    text-shadow: 0 0 8px #00ff9d;
+    text-shadow: 0 0 12px #7f5cff;
 }
 
 .menu-item {
     padding: 12px;
     margin: 6px 0;
-    background: #1a1a1a;
+    background: rgba(20, 20, 40, 0.8);
     border-radius: 8px;
     cursor: pointer;
     transition: 0.2s;
-    border: 1px solid #222;
+    border: 1px solid #2a2a4a;
+    color: #b0aaff;
 }
 
 .menu-item:hover {
-    background: #222;
-    border-color: #00ff9d;
-    color: #00ff9d;
+    background: rgba(40, 20, 80, 0.9);
+    border-color: #8f5cff;
+    color: #dcd2ff;
+    box-shadow: 0 0 10px #8f5cff;
 }
 
 /* ======== メイン画面 ======== */
@@ -54,7 +58,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+    background: linear-gradient(135deg, #050510, #0a0a1a);
 }
 
 /* ======== チャット欄 ======== */
@@ -73,36 +77,37 @@ body {
     border-radius: 12px;
     font-size: 15px;
     line-height: 1.6;
-    animation: fadeIn 0.2s ease;
+    animation: fadeIn 0.25s ease;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ユーザー（右） */
 .user {
-    background: #00ff9d;
-    color: #000;
+    background: linear-gradient(135deg, #5c5cff, #7f5cff);
+    color: #fff;
     margin-left: auto;
     border-bottom-right-radius: 0;
-    box-shadow: 0 0 10px #00ff9d;
+    box-shadow: 0 0 12px #7f5cff;
 }
 
 /* AI（左） */
 .ai {
-    background: #1a1a1a;
-    color: #e0e0e0;
+    background: rgba(20, 20, 40, 0.8);
+    color: #d0d0ff;
     margin-right: auto;
     border-bottom-left-radius: 0;
-    border: 1px solid #333;
+    border: 1px solid #3a3a5a;
+    box-shadow: 0 0 8px #3a3a5a;
 }
 
 /* システムメッセージ */
 .sys {
-    background: #222;
-    color: #aaa;
+    background: rgba(40, 40, 60, 0.6);
+    color: #aaaaff;
     margin: 0 auto;
     text-align: center;
     font-size: 12px;
@@ -114,8 +119,9 @@ body {
 #inputArea {
     display: flex;
     padding: 15px;
-    background: #111;
+    background: rgba(10, 10, 30, 0.9);
     border-top: 1px solid #222;
+    backdrop-filter: blur(6px);
 }
 
 #msg {
@@ -123,25 +129,27 @@ body {
     padding: 12px;
     border-radius: 10px;
     border: 1px solid #333;
-    background: #0d0d0d;
-    color: #e0e0e0;
+    background: #050510;
+    color: #d0d0ff;
     font-size: 15px;
 }
 
 button {
     margin-left: 10px;
     padding: 12px 20px;
-    background: #00ff9d;
-    color: #000;
+    background: linear-gradient(135deg, #5c5cff, #7f5cff);
+    color: #fff;
     border: none;
     border-radius: 10px;
     font-size: 15px;
     cursor: pointer;
     transition: 0.2s;
+    box-shadow: 0 0 10px #7f5cff;
 }
 
 button:hover {
-    background: #00d982;
+    background: linear-gradient(135deg, #7f5cff, #9f7cff);
+    box-shadow: 0 0 14px #9f7cff;
 }
 </style>
 </head>
@@ -150,7 +158,7 @@ button:hover {
 
 <!-- ======== サイドバー ======== -->
 <div id="sidebar">
-    <h2>AI Console</h2>
+    <h2>GROK AI</h2>
     <div class="menu-item">新しいチャット</div>
     <div class="menu-item">学習データ</div>
     <div class="menu-item">設定</div>
@@ -168,7 +176,7 @@ button:hover {
 
 <script>
 /* ======== 簡易AI（学習＋類似度） ======== */
-let memory = JSON.parse(localStorage.getItem("dark_ai_memory") || "{}");
+let memory = JSON.parse(localStorage.getItem("grok_ai_memory") || "{}");
 let waiting = null;
 
 function tokenize(t){
@@ -221,8 +229,8 @@ function send(){
 
     if(waiting){
         memory[waiting] = text;
-        localStorage.setItem("dark_ai_memory",JSON.stringify(memory));
-        addMessage("覚えたよ。","ai");
+        localStorage.setItem("grok_ai_memory",JSON.stringify(memory));
+        addMessage("覚えた。","ai");
         waiting = null;
         msg.value = "";
         return;
@@ -240,7 +248,7 @@ document.getElementById("msg").addEventListener("keydown",e=>{
     if(e.key==="Enter") send();
 });
 
-addMessage("起動完了。何でも話してみて。","ai");
+addMessage("GROK AI 起動完了。何を知りたい？","ai");
 </script>
 
 </body>
