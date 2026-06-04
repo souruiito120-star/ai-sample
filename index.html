@@ -2,200 +2,245 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Modern Chat AI</title>
+<title>Dark AI Chat</title>
 
 <style>
+/* ======== 全体 ======== */
 body {
     margin: 0;
-    background: #e9eef3;
     font-family: "Segoe UI", sans-serif;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    display: flex;
+    height: 100vh;
 }
 
-/* チャット全体 */
-#chat {
-    width: 100%;
-    max-width: 700px;
-    height: 80vh;
-    margin: 20px auto;
+/* ======== サイドバー ======== */
+#sidebar {
+    width: 240px;
+    background: #111;
+    border-right: 1px solid #222;
     padding: 20px;
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar h2 {
+    font-size: 22px;
+    color: #00ff9d;
+    margin-bottom: 25px;
+    text-shadow: 0 0 8px #00ff9d;
+}
+
+.menu-item {
+    padding: 12px;
+    margin: 6px 0;
+    background: #1a1a1a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid #222;
+}
+
+.menu-item:hover {
+    background: #222;
+    border-color: #00ff9d;
+    color: #00ff9d;
+}
+
+/* ======== メイン画面 ======== */
+#main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #0d0d0d, #1a1a1a);
+}
+
+/* ======== チャット欄 ======== */
+#chat {
+    flex: 1;
+    padding: 20px;
     overflow-y: auto;
     scroll-behavior: smooth;
 }
 
-/* メッセージ共通 */
+/* ======== メッセージ ======== */
 .message {
     max-width: 75%;
-    padding: 12px 16px;
-    margin: 10px 0;
-    border-radius: 15px;
-    font-size: 16px;
-    line-height: 1.4;
+    padding: 14px 18px;
+    margin: 12px 0;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    animation: fadeIn 0.2s ease;
 }
 
-/* ユーザー側（右） */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ユーザー（右） */
 .user {
-    background: #0078ff;
-    color: white;
+    background: #00ff9d;
+    color: #000;
     margin-left: auto;
     border-bottom-right-radius: 0;
+    box-shadow: 0 0 10px #00ff9d;
 }
 
-/* AI側（左） */
+/* AI（左） */
 .ai {
-    background: #f1f3f5;
-    color: #333;
+    background: #1a1a1a;
+    color: #e0e0e0;
     margin-right: auto;
     border-bottom-left-radius: 0;
+    border: 1px solid #333;
 }
 
-/* 入力欄 */
+/* システムメッセージ */
+.sys {
+    background: #222;
+    color: #aaa;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+/* ======== 入力欄 ======== */
 #inputArea {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    max-width: 700px;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
-    background: #ffffff;
-    padding: 10px;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+    padding: 15px;
+    background: #111;
+    border-top: 1px solid #222;
 }
 
 #msg {
     flex: 1;
     padding: 12px;
     border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 16px;
+    border: 1px solid #333;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    font-size: 15px;
 }
 
 button {
     margin-left: 10px;
     padding: 12px 20px;
-    background: #0078ff;
-    color: white;
+    background: #00ff9d;
+    color: #000;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
-    background: #005fcc;
+    background: #00d982;
 }
 </style>
 </head>
 
 <body>
 
-<div id="chat"></div>
+<!-- ======== サイドバー ======== -->
+<div id="sidebar">
+    <h2>AI Console</h2>
+    <div class="menu-item">新しいチャット</div>
+    <div class="menu-item">学習データ</div>
+    <div class="menu-item">設定</div>
+</div>
 
-<div id="inputArea">
-    <input id="msg" type="text" placeholder="メッセージを入力…">
-    <button onclick="send()">送信</button>
+<!-- ======== メイン画面 ======== -->
+<div id="main">
+    <div id="chat"></div>
+
+    <div id="inputArea">
+        <input id="msg" type="text" placeholder="メッセージを入力…">
+        <button onclick="send()">送信</button>
+    </div>
 </div>
 
 <script>
-// -----------------------------
-// 学習データ
-// -----------------------------
-let memory = JSON.parse(localStorage.getItem("chat_memory") || "{}");
+/* ======== 簡易AI（学習＋類似度） ======== */
+let memory = JSON.parse(localStorage.getItem("dark_ai_memory") || "{}");
+let waiting = null;
 
-// -----------------------------
-// 類似度計算（簡易）
-// -----------------------------
-function similarity(a, b) {
-    a = a.toLowerCase();
-    b = b.toLowerCase();
-    let count = 0;
-    for (let ch of a) {
-        if (b.includes(ch)) count++;
-    }
-    return count / Math.max(a.length, b.length);
+function tokenize(t){
+    return t.toLowerCase().replace(/[。、！!？?]/g," ").split(" ").filter(x=>x);
 }
 
-// -----------------------------
-// AIの返答
-// -----------------------------
-function aiReply(input) {
-    let bestKey = null;
-    let bestScore = 0;
+function similarity(a,b){
+    let A = tokenize(a), B = tokenize(b);
+    let set = new Set([...A,...B]);
+    let score = 0;
+    set.forEach(w=>{
+        let ca = A.filter(x=>x===w).length;
+        let cb = B.filter(x=>x===w).length;
+        score += Math.min(ca,cb);
+    });
+    return score / Math.max(A.length,B.length);
+}
 
-    for (let key in memory) {
-        let score = similarity(input, key);
-        if (score > bestScore) {
-            bestScore = score;
-            bestKey = key;
+function aiReply(input){
+    let best = null, bestScore = 0;
+    for(let q in memory){
+        let s = similarity(input,q);
+        if(s > bestScore){
+            bestScore = s;
+            best = q;
         }
     }
-
-    if (bestScore < 0.2 || bestKey === null) {
-        return "ごめん、まだよくわからない…教えてくれる？";
+    if(bestScore < 0.2){
+        return {text:"理解できなかった…教えて？", teach:true};
     }
-
-    return memory[bestKey];
+    return {text:memory[best], teach:false};
 }
 
-// -----------------------------
-// メッセージ表示
-// -----------------------------
-function addMessage(text, cls) {
+/* ======== UI ======== */
+function addMessage(t,c){
     let chat = document.getElementById("chat");
     let div = document.createElement("div");
-    div.className = "message " + cls;
-    div.textContent = text;
+    div.className = "message " + c;
+    div.textContent = t;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
 
-// -----------------------------
-// 送信処理
-// -----------------------------
-let waitingForTeach = null;
+function send(){
+    let msg = document.getElementById("msg");
+    let text = msg.value.trim();
+    if(!text) return;
 
-function send() {
-    let input = document.getElementById("msg").value;
-    if (!input) return;
+    addMessage(text,"user");
 
-    addMessage(input, "user");
-
-    let reply = aiReply(input);
-    addMessage(reply, "ai");
-
-    if (reply.includes("教えて")) {
-        waitingForTeach = input;
+    if(waiting){
+        memory[waiting] = text;
+        localStorage.setItem("dark_ai_memory",JSON.stringify(memory));
+        addMessage("覚えたよ。","ai");
+        waiting = null;
+        msg.value = "";
+        return;
     }
 
-    document.getElementById("msg").value = "";
+    let res = aiReply(text);
+    addMessage(res.text,"ai");
+
+    if(res.teach) waiting = text;
+
+    msg.value = "";
 }
 
-// Enterキー送信
-document.getElementById("msg").addEventListener("keydown", e => {
-    if (e.key === "Enter") send();
+document.getElementById("msg").addEventListener("keydown",e=>{
+    if(e.key==="Enter") send();
 });
 
-// -----------------------------
-// 学習処理
-// -----------------------------
-document.getElementById("msg").addEventListener("input", function() {
-    if (waitingForTeach !== null) {
-        let teach = this.value;
-
-        if (teach.endsWith("。") || teach.endsWith("！") || teach.endsWith("？")) {
-            memory[waitingForTeach] = teach;
-            localStorage.setItem("chat_memory", JSON.stringify(memory));
-
-            addMessage("なるほど！覚えたよ！", "ai");
-
-            waitingForTeach = null;
-            this.value = "";
-        }
-    }
-});
+addMessage("起動完了。何でも話してみて。","ai");
 </script>
 
 </body>
