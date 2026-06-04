@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>学習するチャットAI</title>
+<style>
+body {
+    font-family: sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+#chat {
+    width: 90%;
+    max-width: 600px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.message {
+    margin: 10px 0;
+}
+.user {
+    text-align: right;
+    color: #007bff;
+}
+.ai {
+    text-align: left;
+    color: #333;
+}
+#inputArea {
+    width: 90%;
+    max-width: 600px;
+    margin: 10px auto;
+    display: flex;
+}
+#msg {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+}
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+</style>
+</head>
+<body>
+
+<div id="chat"></div>
+
+<div id="inputArea">
+    <input id="msg" type="text" placeholder="メッセージを入力">
+    <button onclick="send()">送信</button>
+</div>
+
+<script>
+// -----------------------------
+// 学習データ（ユーザー入力 → AI返答）
+// -----------------------------
+let memory = JSON.parse(localStorage.getItem("chat_memory") || "{}");
+
+// -----------------------------
+// 類似度計算（超簡易版）
+// -----------------------------
+function similarity(a, b) {
+    a = a.toLowerCase();
+    b = b.toLowerCase();
+    let count = 0;
+    for (let word of a.split("")) {
+        if (b.includes(word)) count++;
+    }
+    return count / Math.max(a.length, b.length);
+}
+
+// -----------------------------
+// AI の返答生成
+// -----------------------------
+function aiReply(input) {
+    let bestKey = null;
+    let bestScore = 0;
+
+    for (let key in memory) {
+        let score = similarity(input, key);
+        if (score > bestScore) {
+            bestScore = score;
+            bestKey = key;
+        }
+    }
+
+    // 類似度が低い → わからない
+    if (bestScore < 0.2 || bestKey === null) {
+        return "ごめん、まだよくわからない…教えてくれる？";
+    }
+
+    return memory[bestKey];
+}
+
+// -----------------------------
+// メッセージ表示
+// -----------------------------
+function addMessage(text, cls) {
+    let chat = document.getElementById("chat");
+    let div = document.createElement("div");
+    div.className = "message " + cls;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// -----------------------------
+// 送信処理
+// -----------------------------
+function send() {
+    let input = document.getElementById("msg").value;
+    if (!input) return;
+
+    addMessage("あなた: " + input, "user");
+
+    let reply = aiReply(input);
+    addMessage("AI: " + reply, "ai");
+
+    // AI が「わからない」と言った場合 → 次のユーザーの返事を学習する
+    if (reply.includes("教えて")) {
+        waitingForTeach = input;
+    }
+
+    document.getElementById("msg").value = "";
+}
+
+// -----------------------------
+// 学習モード
+// -----------------------------
+let waitingForTeach = null;
+
+document.getElementById("msg").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") send();
+});
+
+// ユーザーが AI に教える
+document.getElementById("msg").addEventListener("input", function() {
+    if (waitingForTeach !== null) {
+        let teachInput = this.value;
+
+        if (teachInput.endsWith("。") || teachInput.endsWith("！") || teachInput.endsWith("？")) {
+            memory[waitingForTeach] = teachInput;
+            localStorage.setItem("chat_memory", JSON.stringify(memory));
+
+            addMessage("AI: なるほど！覚えたよ！", "ai");
+
+            waitingForTeach = null;
+            this.value = "";
+        }
+    }
+});
+</script>
+
+</body>
+</html>
