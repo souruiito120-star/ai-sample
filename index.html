@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>GROK Style AI</title>
+<title>NEON CORE</title>
 
 <style>
 /* ======== 全体 ======== */
@@ -10,7 +10,7 @@ body {
     margin: 0;
     font-family: "Segoe UI", sans-serif;
     background: radial-gradient(circle at top, #0a0a1a, #000);
-    color: #d0d0ff;
+    color: #ffd8b0;
     display: flex;
     height: 100vh;
     overflow: hidden;
@@ -19,8 +19,8 @@ body {
 /* ======== サイドバー ======== */
 #sidebar {
     width: 240px;
-    background: rgba(10, 10, 30, 0.9);
-    border-right: 1px solid #222;
+    background: rgba(20, 10, 0, 0.9);
+    border-right: 1px solid #442200;
     padding: 20px;
     box-sizing: border-box;
     display: flex;
@@ -30,27 +30,27 @@ body {
 
 #sidebar h2 {
     font-size: 22px;
-    color: #7f5cff;
+    color: #ff8c3a;
     margin-bottom: 25px;
-    text-shadow: 0 0 12px #7f5cff;
+    text-shadow: 0 0 12px #ff8c3a;
 }
 
 .menu-item {
     padding: 12px;
     margin: 6px 0;
-    background: rgba(20, 20, 40, 0.8);
+    background: rgba(40, 20, 0, 0.8);
     border-radius: 8px;
     cursor: pointer;
     transition: 0.2s;
-    border: 1px solid #2a2a4a;
-    color: #b0aaff;
+    border: 1px solid #553300;
+    color: #ffcc99;
 }
 
 .menu-item:hover {
-    background: rgba(40, 20, 80, 0.9);
-    border-color: #8f5cff;
-    color: #dcd2ff;
-    box-shadow: 0 0 10px #8f5cff;
+    background: rgba(80, 40, 0, 0.9);
+    border-color: #ff8c3a;
+    color: #ffe0c2;
+    box-shadow: 0 0 10px #ff8c3a;
 }
 
 /* ======== メイン画面 ======== */
@@ -58,7 +58,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(135deg, #050510, #0a0a1a);
+    background: linear-gradient(135deg, #0a0500, #1a0f00);
 }
 
 /* ======== チャット欄 ======== */
@@ -87,27 +87,27 @@ body {
 
 /* ユーザー（右） */
 .user {
-    background: linear-gradient(135deg, #5c5cff, #7f5cff);
-    color: #fff;
+    background: linear-gradient(135deg, #ff8c3a, #ffb36b);
+    color: #000;
     margin-left: auto;
     border-bottom-right-radius: 0;
-    box-shadow: 0 0 12px #7f5cff;
+    box-shadow: 0 0 12px #ff8c3a;
 }
 
 /* AI（左） */
 .ai {
-    background: rgba(20, 20, 40, 0.8);
-    color: #d0d0ff;
+    background: rgba(40, 20, 0, 0.8);
+    color: #ffd8b0;
     margin-right: auto;
     border-bottom-left-radius: 0;
-    border: 1px solid #3a3a5a;
-    box-shadow: 0 0 8px #3a3a5a;
+    border: 1px solid #664422;
+    box-shadow: 0 0 8px #664422;
 }
 
 /* システムメッセージ */
 .sys {
-    background: rgba(40, 40, 60, 0.6);
-    color: #aaaaff;
+    background: rgba(60, 40, 10, 0.6);
+    color: #ffddbb;
     margin: 0 auto;
     text-align: center;
     font-size: 12px;
@@ -119,8 +119,8 @@ body {
 #inputArea {
     display: flex;
     padding: 15px;
-    background: rgba(10, 10, 30, 0.9);
-    border-top: 1px solid #222;
+    background: rgba(20, 10, 0, 0.9);
+    border-top: 1px solid #442200;
     backdrop-filter: blur(6px);
 }
 
@@ -128,28 +128,28 @@ body {
     flex: 1;
     padding: 12px;
     border-radius: 10px;
-    border: 1px solid #333;
-    background: #050510;
-    color: #d0d0ff;
+    border: 1px solid #553300;
+    background: #0a0500;
+    color: #ffd8b0;
     font-size: 15px;
 }
 
 button {
     margin-left: 10px;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #5c5cff, #7f5cff);
-    color: #fff;
+    background: linear-gradient(135deg, #ff8c3a, #ffb36b);
+    color: #000;
     border: none;
     border-radius: 10px;
     font-size: 15px;
     cursor: pointer;
     transition: 0.2s;
-    box-shadow: 0 0 10px #7f5cff;
+    box-shadow: 0 0 10px #ff8c3a;
 }
 
 button:hover {
-    background: linear-gradient(135deg, #7f5cff, #9f7cff);
-    box-shadow: 0 0 14px #9f7cff;
+    background: linear-gradient(135deg, #ff9f5c, #ffc48a);
+    box-shadow: 0 0 14px #ff9f5c;
 }
 </style>
 </head>
@@ -176,7 +176,7 @@ button:hover {
 
 <script>
 /* ======== 簡易AI（学習＋類似度） ======== */
-let memory = JSON.parse(localStorage.getItem("grok_ai_memory") || "{}");
+let memory = JSON.parse(localStorage.getItem("neoncore_memory") || "{}");
 let waiting = null;
 
 function tokenize(t){
@@ -229,7 +229,7 @@ function send(){
 
     if(waiting){
         memory[waiting] = text;
-        localStorage.setItem("grok_ai_memory",JSON.stringify(memory));
+        localStorage.setItem("neoncore_memory",JSON.stringify(memory));
         addMessage("覚えた。","ai");
         waiting = null;
         msg.value = "";
@@ -248,9 +248,10 @@ document.getElementById("msg").addEventListener("keydown",e=>{
     if(e.key==="Enter") send();
 });
 
-addMessage("GROK AI 起動完了。何を知りたい？","ai");
+addMessage("NEON CORE 起動完了。何を知りたい？","ai");
 </script>
 
 </body>
 </html>
+
 
