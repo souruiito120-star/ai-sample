@@ -2,83 +2,124 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>学習するチャットAI</title>
+<title>Modern Chat AI</title>
+
 <style>
 body {
-    font-family: sans-serif;
-    background: #f0f0f0;
     margin: 0;
-    padding: 0;
+    background: #e9eef3;
+    font-family: "Segoe UI", sans-serif;
 }
+
+/* チャット全体 */
 #chat {
-    width: 90%;
-    max-width: 600px;
-    margin: 30px auto;
-    background: white;
+    width: 100%;
+    max-width: 700px;
+    height: 80vh;
+    margin: 20px auto;
     padding: 20px;
-    border-radius: 10px;
-    height: 70vh;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     overflow-y: auto;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    scroll-behavior: smooth;
 }
+
+/* メッセージ共通 */
 .message {
+    max-width: 75%;
+    padding: 12px 16px;
     margin: 10px 0;
+    border-radius: 15px;
+    font-size: 16px;
+    line-height: 1.4;
 }
+
+/* ユーザー側（右） */
 .user {
-    text-align: right;
-    color: #007bff;
+    background: #0078ff;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
 }
+
+/* AI側（左） */
 .ai {
-    text-align: left;
+    background: #f1f3f5;
     color: #333;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
 }
+
+/* 入力欄 */
 #inputArea {
-    width: 90%;
-    max-width: 600px;
-    margin: 10px auto;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 700px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
+    background: #ffffff;
+    padding: 10px;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
 }
+
 #msg {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
     font-size: 16px;
 }
+
 button {
-    padding: 10px 20px;
+    margin-left: 10px;
+    padding: 12px 20px;
+    background: #0078ff;
+    color: white;
+    border: none;
+    border-radius: 10px;
     font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #005fcc;
 }
 </style>
 </head>
+
 <body>
 
 <div id="chat"></div>
 
 <div id="inputArea">
-    <input id="msg" type="text" placeholder="メッセージを入力">
+    <input id="msg" type="text" placeholder="メッセージを入力…">
     <button onclick="send()">送信</button>
 </div>
 
 <script>
 // -----------------------------
-// 学習データ（ユーザー入力 → AI返答）
+// 学習データ
 // -----------------------------
 let memory = JSON.parse(localStorage.getItem("chat_memory") || "{}");
 
 // -----------------------------
-// 類似度計算（超簡易版）
+// 類似度計算（簡易）
 // -----------------------------
 function similarity(a, b) {
     a = a.toLowerCase();
     b = b.toLowerCase();
     let count = 0;
-    for (let word of a.split("")) {
-        if (b.includes(word)) count++;
+    for (let ch of a) {
+        if (b.includes(ch)) count++;
     }
     return count / Math.max(a.length, b.length);
 }
 
 // -----------------------------
-// AI の返答生成
+// AIの返答
 // -----------------------------
 function aiReply(input) {
     let bestKey = null;
@@ -92,7 +133,6 @@ function aiReply(input) {
         }
     }
 
-    // 類似度が低い → わからない
     if (bestScore < 0.2 || bestKey === null) {
         return "ごめん、まだよくわからない…教えてくれる？";
     }
@@ -115,16 +155,17 @@ function addMessage(text, cls) {
 // -----------------------------
 // 送信処理
 // -----------------------------
+let waitingForTeach = null;
+
 function send() {
     let input = document.getElementById("msg").value;
     if (!input) return;
 
-    addMessage("あなた: " + input, "user");
+    addMessage(input, "user");
 
     let reply = aiReply(input);
-    addMessage("AI: " + reply, "ai");
+    addMessage(reply, "ai");
 
-    // AI が「わからない」と言った場合 → 次のユーザーの返事を学習する
     if (reply.includes("教えて")) {
         waitingForTeach = input;
     }
@@ -132,25 +173,23 @@ function send() {
     document.getElementById("msg").value = "";
 }
 
-// -----------------------------
-// 学習モード
-// -----------------------------
-let waitingForTeach = null;
-
-document.getElementById("msg").addEventListener("keydown", function(e) {
+// Enterキー送信
+document.getElementById("msg").addEventListener("keydown", e => {
     if (e.key === "Enter") send();
 });
 
-// ユーザーが AI に教える
+// -----------------------------
+// 学習処理
+// -----------------------------
 document.getElementById("msg").addEventListener("input", function() {
     if (waitingForTeach !== null) {
-        let teachInput = this.value;
+        let teach = this.value;
 
-        if (teachInput.endsWith("。") || teachInput.endsWith("！") || teachInput.endsWith("？")) {
-            memory[waitingForTeach] = teachInput;
+        if (teach.endsWith("。") || teach.endsWith("！") || teach.endsWith("？")) {
+            memory[waitingForTeach] = teach;
             localStorage.setItem("chat_memory", JSON.stringify(memory));
 
-            addMessage("AI: なるほど！覚えたよ！", "ai");
+            addMessage("なるほど！覚えたよ！", "ai");
 
             waitingForTeach = null;
             this.value = "";
@@ -161,3 +200,4 @@ document.getElementById("msg").addEventListener("input", function() {
 
 </body>
 </html>
+
